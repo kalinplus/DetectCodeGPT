@@ -12,7 +12,7 @@ from baselines.utils.preprocessing import preprocess_and_save
 import json
 import argparse
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")  # respects an externally exported value (codeparrot demo)
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # from baselines.sample_generate.generate import generate_data
 
@@ -141,12 +141,14 @@ def main(dataset, dataset_key, temperature, tokenizer_name):
 
 
 dataset = "CodeSearchNet"
-tokenizer_name = "codellama/CodeLlama-7b-hf"
+tokenizer_name = "codeparrot/codeparrot-small"
 temperature = 0.2
-dataset_key = "CodeLlama-7b-hf-tp0.2-nostop"
+dataset_key = "codeparrot-small-1000-tp0.2"
 
 main(dataset, dataset_key, temperature, tokenizer_name)
 
-temperature = 1.0
-dataset_key = "CodeLlama-7b-hf-tp1.0-nostop"
-main(dataset, dataset_key, temperature, tokenizer_name)
+# NOTE: tp1.0 data not generated in the codeparrot demo; re-enable after
+# generating a tp1.0 set if a second temperature is needed.
+# temperature = 1.0
+# dataset_key = "codeparrot-small-1000-tp1.0"
+# main(dataset, dataset_key, temperature, tokenizer_name)

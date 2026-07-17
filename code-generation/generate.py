@@ -20,6 +20,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def load_data(path='data/CodeSearchNet', language='python', max_num=10000):
+    """
+    从数据集中抽取代码，切分为 all_prompts 和 all_solutions, 前者用作给 AI 生成代码的 prompts，后者用作人类代码数据
+    
+    @return: all_prompts (List[str]): 一个函数中函数签名和 docstring 的部分
+    @return: all_solutions (List[str]): 一个函数里docstring 之后的部分
+    """
 
     all_prompts = []
     all_solutions = []
@@ -172,6 +178,13 @@ def truncate(completion):
 
 
 def generate_hf(model_name, prompts, solutions, batch_size=16, max_length_sample=128, max_length=128, do_sample=True, top_p=0.95, temperature=0.2):
+    """
+    用给定的模型，根据 prompts (函数签名+docstring) 生成 output (函数体)，作为 AI 代码数据
+
+    @return: prompts (List[str]): 一个函数里函数签名和 docstring 的部分
+    @return: outputs (List[str]): 由 model_name 的模型生成的函数体，作为 AI 代码数据
+    @return: solutions (List[str]): 一个函数里docstring 之后的部分，只传递，全程不参与生成
+    """
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
@@ -193,6 +206,10 @@ def generate_hf(model_name, prompts, solutions, batch_size=16, max_length_sample
         tokenizer.pad_token_id = tokenizer.eos_token_id
         logger.info(f'pad_token: {tokenizer.pad_token}')
         tokenizer.padding_side = 'left'
+    elif "llama" in model_name.lower() or "wizard" in model_name.lower():
+        # llama tokenizers have no pad token; transformers v5 generate() requires one
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+        logger.info(f'pad_token: {tokenizer.pad_token}')
 
     if 't5p' in model_name.lower():
         model = AutoModelForSeq2SeqLM.from_pretrained(model_name,

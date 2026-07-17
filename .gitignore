@@ -139,3 +139,5 @@ cache/
 data/
 *back*/
 *.pt
+
+output

@@ -13,7 +13,7 @@ def preprocess_and_save(args):
     
 
 
-    cache_dir = args.cache_dir
+    cache_dir = os.path.expanduser(args.cache_dir)  # transformers v5 no longer expands ~ itself
     os.environ["XDG_CACHE_HOME"] = cache_dir
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)

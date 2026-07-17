@@ -1,7 +1,7 @@
 # %%
 import argparse
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")  # respects an externally exported value (codeparrot demo)
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 import json
 from baselines.utils.preprocessing import preprocess_and_save
@@ -63,14 +63,14 @@ parser.add_argument('--max_todo_num', type=int, default=3)
 
 args_dict = {
     'dataset': "CodeSearchNet",
-    'dataset_key': "CodeLlama-7b-hf-10000-tp1.0",
+    'dataset_key': "codeparrot-small-1000-tp0.2",
     'pct_words_masked': 0.5,
     'pct_identifiers_masked': 0.75,
     'span_length': 2,
     'n_samples': 500,
     'n_perturbation_list': "50",
     'n_perturbation_rounds': 1,
-    'base_model_name': "codellama/CodeLlama-7b-hf",
+    'base_model_name': "codeparrot/codeparrot-small",
     'scoring_model_name': "",
     'mask_filling_model_name': "Salesforce/codet5p-770m",
     'batch_size': 25,

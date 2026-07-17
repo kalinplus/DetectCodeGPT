@@ -66,7 +66,14 @@ def load_mask_filling_model(args, mask_filling_model_name, model_config):
         n_positions = 512
 
     # preproc_tokenizer = transformers.AutoTokenizer.from_pretrained('t5-small', model_max_length=512, cache_dir=model_config['cache_dir'])
-    mask_tokenizer = transformers.AutoTokenizer.from_pretrained(mask_filling_model_name, model_max_length=n_positions, cache_dir=model_config['cache_dir'])
+    # transformers>=5 compat: old tokenizer configs carry dict-form additional_special_tokens
+    # which crash RobertaTokenizer ("Input must be a List[Union[str, AddedToken]]");
+    # re-passing them as plain strings avoids the broken deserialization path.
+    try:
+        mask_tokenizer = transformers.AutoTokenizer.from_pretrained(mask_filling_model_name, model_max_length=n_positions, cache_dir=model_config['cache_dir'])
+    except TypeError:
+        mask_tokenizer = transformers.AutoTokenizer.from_pretrained(mask_filling_model_name, model_max_length=n_positions, cache_dir=model_config['cache_dir'],
+                                                                    additional_special_tokens=[f'<extra_id_{i}>' for i in range(100)])
     if 'incoder' in mask_filling_model_name:
         mask_tokenizer.pad_token = "<pad>"
         mask_tokenizer.paddding_side = "left"

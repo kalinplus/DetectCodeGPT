@@ -22,7 +22,7 @@ from baselines.utils.preprocessing import preprocess_and_save
 import json
 import argparse
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")  # respects an externally exported value (see run_codellama7b.sh)
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # from baselines.sample_generate.generate import generate_data
 
@@ -77,17 +77,16 @@ def setup_args():
     parser.add_argument('--max_todo_num', type=int, default=3)
 
     args_dict = {
-        'dataset': "TheVault",
-        # 'dataset': "CodeSearchNet",
-        'dataset_key': "CodeLlama-7b-hf-10000-tp0.2",
-        # 'dataset_key': "CodeLlama-7b-hf-10000-tp1.0",
+        # Paper reproduction config: matches run_codellama7b.sh
+        'dataset': "CodeSearchNet",
+        'dataset_key': "codeparrot-small-1000-tp0.2",  # must equal the folder name under code-generation/output/<dataset>/ (codeparrot demo)
         'pct_words_masked': 0.5,
         'pct_identifiers_masked': 0.75,
         'span_length': 2,
         'n_samples': 500,
         'n_perturbation_list': "50",
         'n_perturbation_rounds': 1,
-        'base_model_name': "codellama/CodeLlama-7b-hf", # Make sure to use the same model as the one used for generating the samples
+        'base_model_name': "codeparrot/codeparrot-small", # Make sure to use the same model as the one used for generating the samples (codeparrot demo)
         'mask_filling_model_name': "Salesforce/codet5p-770m",
         'batch_size': 50,
         'chunk_size': 10,
