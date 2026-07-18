@@ -1,27 +1,39 @@
+# Requirements — versions pinned to the verified-working `de` env
+# (transformers 5.x / torch 2.10 / tree-sitter 0.25 / matplotlib 3.10).
+# The code was ported to these specific APIs (see COMPATIBILITY_FIXES.md), so
+# do not loosen these pins or the compat fixes will no longer line up.
+
 # Core deep learning and AI libraries
-torch
-transformers
-accelerate
-datasets
-openai
+torch==2.10.0
+transformers==5.13.1
+accelerate==1.14.0
+datasets==5.0.0
+openai==2.45.0
+
+# Model / dataset fetching — snapshot_download is the working download path on
+# this machine (huggingface-cli prints help instead of downloading).
+huggingface_hub==1.23.0
 
 # Scientific computing
-numpy
-scipy
-scikit-learn
+numpy==2.2.6
+scipy==1.15.3
+scikit-learn==1.7.2
+pandas==2.3.3
 
-# Data processing and analysis
-pandas
-matplotlib
-seaborn
+# Plotting and result tables
+matplotlib==3.10.9
+prettytable==3.18.0
 
 # Progress bars and logging
-tqdm
-loguru
+tqdm==4.68.4
+loguru==0.7.3
 
-# Code parsing
+# Code parsing — new tree-sitter API: grammars ship as separate pip packages and
+# Language.build_library was removed in 0.22+. The python grammar is required;
+# the others (tree-sitter-java/php/go/ruby/javascript) are optional and only
+# needed if you analyze non-python languages.
 tree-sitter==0.25.1
 tree-sitter-python==0.23.6
 
-# Web requests (for API calls)
-requests
+# Web requests (used transitively by datasets/transformers; also for direct API calls)
+requests==2.34.2

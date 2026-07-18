@@ -47,7 +47,7 @@ parser.add_argument('--pre_perturb_pct', type=float, default=0.0)
 parser.add_argument('--pre_perturb_span_length', type=int, default=5)
 parser.add_argument('--random_fills', action='store_true')
 parser.add_argument('--random_fills_tokens', action='store_true')
-parser.add_argument('--cache_dir', type=str, default="~/.cache/huggingface/hub")
+parser.add_argument('--cache_dir', type=str, default=os.path.expanduser("~/.cache/huggingface/hub"))
 parser.add_argument('--prompt_len', type=int, default=30)
 parser.add_argument('--generation_len', type=int, default=200)
 parser.add_argument('--min_words', type=int, default=55)
@@ -96,7 +96,7 @@ args_dict = {
     'pre_perturb_span_length': 5,
     'random_fills': False,
     'random_fills_tokens': False,
-    'cache_dir': "~/.cache/huggingface/hub",
+    'cache_dir': os.path.expanduser("~/.cache/huggingface/hub"),
     'prompt_len': 30,
     'generation_len': 200,
     'min_words': 55,

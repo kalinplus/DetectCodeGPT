@@ -15,40 +15,27 @@ import sys
 sys.setrecursionlimit(5000)
 
 
-if not os.path.exists('build/my-languages.so'):
-    Language.build_library(
-        # Store the library in the `build` directory
-        'build/my-languages.so',
+# tree-sitter >= 0.22 API: grammars are provided by separate pip packages
+# (tree-sitter-python, tree-sitter-java, ...); Language.build_library no longer exists.
+import tree_sitter_python
 
-        # Include one or more languages
-        [
-            './tree-sitter/tree-sitter-python',
-            './tree-sitter/tree-sitter-java',
-            './tree-sitter/tree-sitter-php',
-            './tree-sitter/tree-sitter-go',
-            './tree-sitter/tree-sitter-ruby',
-            './tree-sitter/tree-sitter-javascript',
-        ]
-    )
-else:
-    logger.info('build/my-languages.so already exists, skip building')
-
-PYTHON_LANGUAGE = Language('build/my-languages.so', 'python')
-JAVA_LANGUAGE = Language('build/my-languages.so', 'java')
-PHP_LANGUAGE = Language('build/my-languages.so', 'php')
-GO_LANGUAGE = Language('build/my-languages.so', 'go')
-RUBY_LANGUAGE = Language('build/my-languages.so', 'ruby')
-JAVASCRIPT_LANGUAGE = Language('build/my-languages.so', 'javascript')
-
-# map from language to tree-sitter language
 LANGUAGE_MAP = {
-    'java': JAVA_LANGUAGE,
-    'python': PYTHON_LANGUAGE,
-    'php': PHP_LANGUAGE,
-    'go': GO_LANGUAGE,
-    'ruby': RUBY_LANGUAGE,
-    'javascript': JAVASCRIPT_LANGUAGE,
+    'python': Language(tree_sitter_python.language()),
 }
+
+# optional grammars: enable only if the corresponding pip package is installed
+for _lang, _module in [
+    ('java', 'tree_sitter_java'),
+    ('php', 'tree_sitter_php'),
+    ('go', 'tree_sitter_go'),
+    ('ruby', 'tree_sitter_ruby'),
+    ('javascript', 'tree_sitter_javascript'),
+]:
+    try:
+        _mod = __import__(_module)
+        LANGUAGE_MAP[_lang] = Language(_mod.language())
+    except ImportError:
+        logger.info(f'{_module} not installed, {_lang} tagging unavailable')
 
 parser = Parser()
 
@@ -79,7 +66,7 @@ token_categories = {
 
 
 def get_tagged_tokens(code, lang):
-    parser.set_language(LANGUAGE_MAP[lang])
+    parser.language = LANGUAGE_MAP[lang]
     tree = parser.parse(bytes(code, 'utf-8'))
 
     tagged_tokens_list = []
