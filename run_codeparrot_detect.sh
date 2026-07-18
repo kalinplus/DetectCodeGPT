@@ -11,7 +11,7 @@ export CUDA_VISIBLE_DEVICES="$GPU"
 
 DATASET=CodeSearchNet
 MODEL=codeparrot/codeparrot-small
-MAX_NUM=1000
+MAX_NUM=100
 TEMPERATURE=0.2
 DATASET_KEY="${MODEL##*/}-${MAX_NUM}-tp${TEMPERATURE}"   # must match generate.py output folder
 OUT="$REPO/code-generation/output/$DATASET/$DATASET_KEY/outputs.txt"

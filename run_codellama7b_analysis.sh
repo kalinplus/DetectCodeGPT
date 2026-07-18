@@ -30,7 +30,7 @@ GPU="${1:-0}"
 PYTHON=/mnt/workspace/hkl/miniconda3/envs/de/bin/python
 REPO=/mnt/cpfs/hkl/repeat/DetectCodeGPT
 DATASET=CodeSearchNet
-DATASET_KEY=CodeLlama-7b-hf-100-tp0.2
+DATASET_KEY=CodeLlama-7b-hf-300-tp0.2
 
 export HF_ENDPOINT=https://hf-mirror.com
 export TOKENIZERS_PARALLELISM=false
