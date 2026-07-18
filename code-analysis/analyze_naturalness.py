@@ -63,14 +63,14 @@ parser.add_argument('--max_todo_num', type=int, default=3)
 
 args_dict = {
     'dataset': "CodeSearchNet",
-    'dataset_key': "codeparrot-small-1000-tp0.2",
+    'dataset_key': "CodeLlama-7b-hf-100-tp0.2",
     'pct_words_masked': 0.5,
     'pct_identifiers_masked': 0.75,
     'span_length': 2,
     'n_samples': 500,
     'n_perturbation_list': "50",
     'n_perturbation_rounds': 1,
-    'base_model_name': "codeparrot/codeparrot-small",
+    'base_model_name': "codellama/CodeLlama-7b-hf",
     'scoring_model_name': "",
     'mask_filling_model_name': "Salesforce/codet5p-770m",
     'batch_size': 25,

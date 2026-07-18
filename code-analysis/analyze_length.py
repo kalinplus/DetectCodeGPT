@@ -141,9 +141,9 @@ def main(dataset, dataset_key, temperature, tokenizer_name):
 
 
 dataset = "CodeSearchNet"
-tokenizer_name = "codeparrot/codeparrot-small"
+tokenizer_name = "codellama/CodeLlama-7b-hf"
 temperature = 0.2
-dataset_key = "codeparrot-small-1000-tp0.2"
+dataset_key = "CodeLlama-7b-hf-100-tp0.2"
 
 main(dataset, dataset_key, temperature, tokenizer_name)
 

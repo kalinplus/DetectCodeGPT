@@ -65,14 +65,19 @@ parser.add_argument('--max_todo_num', type=int, default=3)
 args_dict = {
 
     'dataset': "CodeSearchNet",
-    'dataset_key': "CodeLlama-7b-hf-tp0.2",
+    'dataset_key': "CodeLlama-7b-hf-100-tp0.2",
     'pct_words_masked': 0.5,
     'pct_identifiers_masked': 0.75,
     'span_length': 2,
     'n_samples': 10000,
     'n_perturbation_list': "50",
     'n_perturbation_rounds': 1,
-    'base_model_name': "bigcode/santacoder",
+    # NOTE: align_tokens_with_categories() (token_tagging.py) strips GPT-2 BPE
+    # markers (Ġ/Ċ) to recover token substrings. CodeLlama's SentencePiece tokenizer
+    # uses ▁ instead, so every token's position lookup fails -> 100% alignment drop.
+    # Use a GPT-2-style tokenizer here; the token CATEGORY comes from tree-sitter, so
+    # the choice of code-segmenter is incidental to the category-proportion result.
+    'base_model_name': "codeparrot/codeparrot-small",
     'scoring_model_name': "",
     'mask_filling_model_name': "Salesforce/codet5p-770m",
     'batch_size': 25,

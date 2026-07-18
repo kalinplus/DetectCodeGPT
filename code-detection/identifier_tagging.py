@@ -38,6 +38,7 @@ def get_identifier(code, lang):
     identifiers = []
 
     def traverse(root):
+        # 遍历筛选所有标识符，但是跳过前一个字符是 . 的（属性）和标识符是 self 的（不应被扰动）
         if root is None:
             return
         for child in root.children:
@@ -55,7 +56,7 @@ def get_identifier(code, lang):
 
 
     parser.language = LANGUAGE_MAP[lang]
-    tree = parser.parse(bytes(code, 'utf-8'))
+    tree = parser.parse(bytes(code, 'utf-8'))  # 解析代码，得到 AST
     traverse(tree.root_node)
     for id in pos:
         identifiers.append(get_identifier_from_position(code, id[0], id[1]))
@@ -64,7 +65,7 @@ def get_identifier(code, lang):
 
 
 def get_identifier_from_position(code_string, start_point, end_point):
-
+    # 根据（行，列）的起止点从原文字符串里切分出标识符文本
     lines = code_string.splitlines()
 
     identifier = lines[start_point[0]][start_point[1]:end_point[1]]

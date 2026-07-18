@@ -37,7 +37,7 @@ def setup_args():
     parser.add_argument('--n_samples', type=int, default=5)
     parser.add_argument('--n_perturbation_list', type=str, default="10")
     parser.add_argument('--n_perturbation_rounds', type=int, default=1)
-    parser.add_argument('--base_model_name', type=str, default="")
+    parser.add_argument('--base_model_name', type=str, default="")  # 打分模型，由于 DetectGPT 的假设，需要和生成模型是同一个
     parser.add_argument('--scoring_model_name', type=str, default="")
     parser.add_argument('--mask_filling_model_name', type=str, default="Salesforce/CodeT5-large")
     parser.add_argument('--batch_size', type=int, default=5)
@@ -67,7 +67,7 @@ def setup_args():
     parser.add_argument('--min_words', type=int, default=55)
     parser.add_argument('--temperature', type=float, default=1)
     parser.add_argument('--baselines', type=str, default="LRR,DetectGPT,NPR")
-    parser.add_argument('--perturb_type', type=str, default="random")
+    parser.add_argument('--perturb_type', type=str, default="random")  # 扰动策略，种类见 perturb_texts_
     parser.add_argument('--pct_identifiers_masked', type=float, default=0.5)
     parser.add_argument('--min_len', type=int, default=0)
     parser.add_argument('--max_len', type=int, default=128)
@@ -79,14 +79,14 @@ def setup_args():
     args_dict = {
         # Paper reproduction config: matches run_codellama7b.sh
         'dataset': "CodeSearchNet",
-        'dataset_key': "codeparrot-small-1000-tp0.2",  # must equal the folder name under code-generation/output/<dataset>/ (codeparrot demo)
+        'dataset_key': "CodeLlama-7b-hf-300-tp0.2",  # must equal the folder name under code-generation/output/<dataset>/
         'pct_words_masked': 0.5,
         'pct_identifiers_masked': 0.75,
         'span_length': 2,
-        'n_samples': 500,
+        'n_samples': 300,
         'n_perturbation_list': "50",
         'n_perturbation_rounds': 1,
-        'base_model_name': "codeparrot/codeparrot-small", # Make sure to use the same model as the one used for generating the samples (codeparrot demo)
+        'base_model_name': "codellama/CodeLlama-7b-hf", # MUST be the same model that generated the samples (CodeLlama-7b-hf-300-tp0.2)
         'mask_filling_model_name': "Salesforce/codet5p-770m",
         'batch_size': 50,
         'chunk_size': 10,
@@ -133,7 +133,7 @@ def setup_args():
 
 
 def generate_data(dataset, key, max_num=200, min_len=0, max_len=128, max_comment_num=10, max_def_num=5, cut_def=False, max_todo_num=3):
-
+    # 从指定配置目录读取数据
     path = f'../code-generation/output/{dataset}/{key}/outputs.txt'
 
     logger.info(f'Loading data from {path}')
@@ -278,6 +278,8 @@ def tokenize_and_mask_identifiers(text, args, span_length, pct, ceil_pct=False, 
 
 
 def tokenize_and_mask(text, args, span_length, pct, ceil_pct=False):
+    # 和 detectgpt 一样，按空格切分 token，随机选择若干 span_length 长度的 span 替换为 
+    # <<mask>>，再编号为 <extra_id_0>, <extra_id_1>, ..., 交给 T5 去填
     tokens = text.split(' ')
     mask_string = '<<<mask>>>'
 
@@ -355,6 +357,9 @@ def extract_fills(texts):
 
 
 def perturb_texts_(texts, args,  model_config, ceil_pct=False):
+    """
+    按 perturb_type 进行分发，对输入的 texts 进行扰动
+    """
     span_length = args.span_length
     pct = args.pct_words_masked
     lambda_poisson = args.span_length
@@ -365,17 +370,18 @@ def perturb_texts_(texts, args,  model_config, ceil_pct=False):
     elif args.perturb_type == 'random-line-shuffle':
         perturbed_texts = [random_line_shuffle(x, pct) for x in texts]
         return perturbed_texts
+    # 本文贡献，只破坏格式（space，newline）
     elif args.perturb_type == 'random-insert-newline':
         perturbed_texts = [random_insert_newline(x, pct, lambda_poisson) for x in texts]
         return perturbed_texts
     elif args.perturb_type == 'random-insert-space':
         perturbed_texts = [random_insert_space(x, pct, lambda_poisson) for x in texts]
         return perturbed_texts
-    elif args.perturb_type == 'random-insert-space-newline':
+    elif args.perturb_type == 'random-insert-space-newline':  # 同时应用两种扰动
         perturbed_texts = [random_insert_space(x, pct, lambda_poisson) for x in texts]
         perturbed_texts = [random_insert_newline(x, pct, lambda_poisson) for x in perturbed_texts]
         return perturbed_texts
-    elif args.perturb_type == 'random-insert-space+newline':
+    elif args.perturb_type == 'random-insert-space+newline':  # 把样本对半分给两种扰动
         perturbed_texts_part1 = [random_insert_space(x, pct, lambda_poisson) for x in texts]
         perturbed_texts_part2 = [random_insert_newline(x, pct, lambda_poisson) for x in texts]
         total_num = len(perturbed_texts_part1)
@@ -417,7 +423,7 @@ def perturb_texts_(texts, args,  model_config, ceil_pct=False):
 
 
 def perturb_texts(texts, args,  model_config,  ceil_pct=False):
-
+    # 扰动所有文本
     def perturb_texts_once(texts, args,  model_config,  ceil_pct=False):
 
         chunk_size = args.chunk_size
@@ -454,7 +460,7 @@ def random_line_shuffle(text, pct=0.3):
         lines[idx], lines[idx+1] = lines[idx+1], lines[idx]
     return '\n'.join(lines)
 
-
+# 了解 detectgpt 的话，其实看这两个函数就行了。detectcodegpt 真正的变化就在这
 def random_insert_newline(text, pct=0.3, mean=1):
     '''
     randomly insert a newline for pct of the lines
@@ -468,8 +474,6 @@ def random_insert_newline(text, pct=0.3, mean=1):
         # n_newlines = scipy.stats.poisson.rvs(mean) + 1
         lines[idx] = lines[idx] + '\n'*n_newlines
     return '\n'.join(lines)
-
-
 def random_insert_space(text, pct=0.3, mean=1):
     '''
     randomly insert a space for pct of the lines
@@ -479,7 +483,7 @@ def random_insert_space(text, pct=0.3, mean=1):
     n_inserted = int(n_tokens * pct)
     inserted_idxs = np.random.choice(n_tokens, n_inserted, replace=False)
     for idx in inserted_idxs:
-        n_spaces = scipy.stats.poisson.rvs(mean) + 1
+        n_spaces = scipy.stats.poisson.rvs(mean) + 1  # 插入的空格数服从泊松分布
         # n_spaces = 1
         tokens[idx] = tokens[idx] + ' '*n_spaces
     return ' '.join(tokens)
@@ -519,6 +523,7 @@ def vislualize_distribution(predictions, title, ax):
 
 def main():
     """Main function to run the code detection pipeline."""
+    # 准备参数，模型，数据，构建输出目录
     args = setup_args()
     
     mask_filling_model_name = args.mask_filling_model_name
@@ -543,58 +548,10 @@ def main():
     logger.info(f'Original: {data["original"][0]}')
     logger.info(f'Sampled: {data["sampled"][0]}')
 
-    ceil_pct = False
-    texts = ['''
-    def remove_mask_space(text, args, **kwargs):
-        # find all the mask positions " <extra_id_\d+> ", and remove the space before and after the mask
-        pattern = re.compile(r" <extra_id_\d+> ")
-        matches = pattern.findall(text)
-        for match in matches:
-            text = text.replace(match, match.strip())
-        return text
-    ''']
-    span_length = args.span_length
-    pct = args.pct_words_masked
-    lambda_poisson = args.span_length
-
-    if args.perturb_type == 'random':
-        masked_texts = [tokenize_and_mask(x, args, span_length, pct, ceil_pct) for x in texts]
-    elif args.perturb_type == 'identifier-masking':
-        masked_texts = [tokenize_and_mask_identifiers(x, args, span_length, pct, ceil_pct) for x in texts]
-    elif args.perturb_type == 'random-line-shuffle':
-        masked_texts = [random_line_shuffle(x, pct) for x in texts]
-    elif args.perturb_type == 'random-insert-newline':
-        masked_texts = [random_insert_newline(x, pct, lambda_poisson) for x in texts]
-    elif args.perturb_type == 'random-insert-space':
-        masked_texts = [random_insert_space(x, pct, lambda_poisson) for x in texts]
-    elif args.perturb_type == 'random-insert-space-newline':
-        masked_texts = [random_insert_space(x, pct, lambda_poisson) for x in texts]
-        masked_texts = [random_insert_newline(x, pct, lambda_poisson) for x in masked_texts]
-    elif args.perturb_type == 'random-insert-space+newline':
-        perturbed_texts_part1 = [random_insert_space(x, pct, lambda_poisson) for x in texts]
-        perturbed_texts_part2 = [random_insert_newline(x, pct, lambda_poisson) for x in texts]
-        total_num = len(perturbed_texts_part1)
-        n1 = int(total_num / 2)
-        n2 = total_num - n1
-        perturbed_texts_part1 = perturbed_texts_part1[:n1]
-        perturbed_texts_part2 = perturbed_texts_part2[:n2]
-        masked_texts = perturbed_texts_part1 + perturbed_texts_part2
-    else:
-        raise ValueError(f'Unknown perturb_type: {args.perturb_type}')
-
-    raw_fills = replace_masks(masked_texts, model_config, args)
-    extracted_fills = extract_fills(raw_fills)
-    perturbed_texts = apply_extracted_fills(masked_texts, extracted_fills)
-
-    logger.info(f'original texts: {texts[0]}')
-    logger.info(f'masked_texts: {masked_texts[0]}')
-    logger.info(f'perturbed_texts: {perturbed_texts[0]}')
-
-    # from baselines.detectGPT import perturb_texts
-
     original_text = data["original"]
     sampled_text = data["sampled"]
-
+    
+    # 对数据进行扰动
     perturb_fn = functools.partial(perturb_texts, args=args, model_config=model_config)  # perturbation function
     p_sampled_text = perturb_fn([x for x in sampled_text for _ in range(max(n_perturbation_list))])  # perturb sampled text
     p_original_text = perturb_fn([x for x in original_text for _ in range(max(n_perturbation_list))])  # perturb original text
@@ -608,23 +565,9 @@ def main():
             "perturbed_original": p_original_text[idx * max(n_perturbation_list): (idx + 1) * max(n_perturbation_list)]
         })
 
-    selected_index = 1
-    selected_perturb = 3
-
-    print(original_text[selected_index])
-    # p_original_text[:5]
-    print(p_original_text[int(args.n_perturbation_list)*selected_index+selected_perturb])
-    # print the difference between the original and perturbed text
-    print("\nDifference between original and perturbed text:")
-    print([x for x in p_original_text[int(args.n_perturbation_list)*selected_index+selected_perturb].split(' ') if x not in original_text[selected_index].split(' ')])
-
-    # show the length of the original and perturbed text
-    print(f"original text length: {len(original_text)}")
-    print(f"perturbed text length: {len(p_original_text)}")
-
     model_config['mask_model'] = model_config['mask_model'].cpu()
     torch.cuda.empty_cache()
-
+    # 载入打分模型对扰动后的文本（和原文本）打分，计算指标
     # start to load the base scoring model
     model_config = load_base_model_and_tokenizer(args, model_config)
 
@@ -656,7 +599,8 @@ def main():
             res[f"perturbed_original_logrank_{n_perturbation}"] = np.mean([i for i in p_original_rank[:n_perturbation] if not math.isnan(i)])
 
     torch.cuda.empty_cache()
-
+    
+    # 输出和可视化
     print(len(results))  # corresponds to the number of samples, and the result of each sample is stored in a dictionary
     print(results[0].keys())  # corresponds to the computed metrics of for each sample
 

@@ -666,7 +666,7 @@ if __name__ == '__main__':
     lang = 'python'
 
 
-    code_pairs = load_data(dataset='CodeSearchNet', key='codeparrot-small-1000-tp0.2', max_num=max_num)
+    code_pairs = load_data(dataset='CodeSearchNet', key='CodeLlama-7b-hf-100-tp0.2', max_num=max_num)
 
     # analyze all the identifiers
     # analyze_identifiers(code_pairs, lang)
@@ -679,7 +679,7 @@ if __name__ == '__main__':
     check_heaps_law(code_pairs, lang)
 
 
-    code_pairs = load_data(dataset='CodeSearchNet', key='codeparrot-small-1000-tp0.2', max_num=max_num)
+    code_pairs = load_data(dataset='CodeSearchNet', key='CodeLlama-7b-hf-100-tp0.2', max_num=max_num)
 
     # analyze all the identifiers
     # analyze_identifiers(code_pairs, lang)

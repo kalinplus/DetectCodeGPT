@@ -20,12 +20,12 @@ REPO=/mnt/cpfs/hkl/repeat/DetectCodeGPT
 
 export HF_ENDPOINT=https://hf-mirror.com
 export TOKENIZERS_PARALLELISM=false
-export CUDA_VISIBLE_DEVICES="0"   # main.py uses os.environ.setdefault -> respects this
+export CUDA_VISIBLE_DEVICES="7"   # main.py uses os.environ.setdefault -> respects this
 
 # ---------------- pinned paper configuration ----------------
 DATASET=CodeSearchNet
 MODEL=codellama/CodeLlama-7b-hf
-MAX_NUM=1000
+MAX_NUM=300
 TEMPERATURE=0.2
 DATASET_KEY="CodeLlama-7b-hf-${MAX_NUM}-tp${TEMPERATURE}"
 OUT_DIR="$REPO/code-generation/output/$DATASET/$DATASET_KEY"
